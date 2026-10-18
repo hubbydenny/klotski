@@ -53,7 +53,10 @@ inline constexpr const char* MATERIAL_CREATE = "48 89 5C 24 ? 48 89 6C 24 ? 48 8
 inline constexpr const char*  SKYBOX_COLOR_PATTERN = "F2 0F 10 8F ? ? ? ? 4C 8D 44 24 50 F3 0F 10 9F ? ? ? ?";
 inline constexpr const char* GET_VIEW_MODEL_OFFSETS = "40 55 53 56 41 56 41 57 48 8B EC 48 83 EC 20 4D 8B F8 4C 8B F2 48 8B F1 E8";
 inline constexpr const char*  CALC_VIEWMODEL_VIEW = "40 53 48 83 EC 60 48 8B 41 08 49 8B D8 8B 48 30 48 C1 E9 0C F6 C1 01 0F 85 48 01 00 00 41 B8 07";
-inline constexpr const char* FLASH = = "85 D2 0F 88 ? ? ? ? 48 89 4C 24 08 55 56"; // poebota :D
+inline constexpr const char* FLASH = "85 D2 0F 88 ? ? ? ? 48 89 4C 24 08 55 56"; // poebota :D
+inline constexpr const char* SETUP_FOID = "48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 48 89 4C 24 08 57 41 54 41 55 41 56 41 57 48 83 EC 20 48 63 02";
+inline constexpr const char* DRAW_SMOKE_VERTEX = "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 48 8B 9C 24 ? ? ? ? 4D 8B F8";
+inline constexpr const char* CROSSHAIR_DRAW = "48 89 5C 24 08 57 48 83 EC 20 48 8B D9 E8 ? ? ? ? 48 85";
 //scalaformula
 namespace patterns {
     inline constexpr const char* kRunScript = "4C 89 4C 24 ?? 4C 89 44 24 ?? 48 89 54 24 ?? 55 53 56 57 41 54 41 56 41 57 48 8D 6C 24";
