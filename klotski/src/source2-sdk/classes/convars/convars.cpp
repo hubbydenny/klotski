@@ -12,7 +12,7 @@ namespace
 	constexpr std::uint16_t capacity_mask = 0x7FFF;
 }
 
-CConVar* IEngineCvar::FindVar(std::uint32_t name_hash)
+CConVar* enginecvr::FindVar(std::uint32_t name_hash)
 {
 	const std::uint16_t capacity = static_cast<std::uint16_t>(allocation_count & capacity_mask);
 
@@ -34,13 +34,13 @@ CConVar* IEngineCvar::FindVar(std::uint32_t name_hash)
 	return nullptr;
 }
 
-CConVar* IEngineCvar::FindVar(const char* name)
+CConVar* enginecvr::FindVar(const char* name)
 {
 	if (!name) return nullptr;
 	return FindVar(hash_name(name));
 }
 
-bool IEngineCvar::unlock_all()
+bool enginecvr::unlock_all()
 {
 	constexpr std::uint64_t restriction_mask = FCVAR_DEVELOPMENTONLY | FCVAR_HIDDEN | FCVAR_SOMETHING_THAT_HIDES;
 	const std::uint16_t capacity = static_cast<std::uint16_t>(allocation_count & capacity_mask);
@@ -63,7 +63,7 @@ bool IEngineCvar::unlock_all()
 	return current == invalid_index;
 }
 
-CConVar* IEngineCvar::GetConVar(const char* name)
+CConVar* enginecvr::GetConVar(const char* name)
 {
 	if (!name) return nullptr;
 
