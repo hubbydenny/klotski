@@ -77,7 +77,7 @@ static_assert(offsetof(CConVar, szName) == 0x0, "CConVar::szName has wrong offse
 static_assert(offsetof(CConVar, nFlags) == 0x30, "CConVar::nFlags has wrong offset");
 static_assert(offsetof(CConVar, value) == 0x58, "CConVar::value has wrong offset");
 
-class IEngineCvar
+class enginecvr
 {
 public:
 	struct convar_container_t
