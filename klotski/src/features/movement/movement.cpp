@@ -28,6 +28,7 @@
 
 #include <Windows.h>
 
+// will recode this shit soon
 namespace {
 	constexpr float k_rad_to_deg{ 180.0f / std::numbers::pi_v<float> };
 	constexpr float k_scan_step{ 1.f };
@@ -105,7 +106,7 @@ static bool edgebug_locked();
 void movement::run_bhop(user_cmd_t* cmd)
 {
 	if (!config::context.bhop || !cmd) return;
-	if (jumpbug_active || edgebug_locked()) return;
+	if (edgebug_locked()) return;
 	if (!((cmd->buttons | cmd->buttons3) & in_jump)) return;
 	auto local = sdk::local_player;
 	if (!local || !local->is_alive() || !interfaces::cvar) return;
@@ -131,8 +132,8 @@ void movement::run_bhop(user_cmd_t* cmd)
 void movement::pixelsurf(user_cmd_t* cmd)
 {
 	if (!config::context.pixelsurf) return;
-	if (jumpbug_active) return;
-	if (edgebug_locked()) return;
+	//if (jumpbug_active) return;
+	//if (edgebug_locked()) return;
 	if (!cmd)
 	{
 		pixelsurf_debug("cmd missing");
@@ -303,7 +304,6 @@ void movement::pixelsurf(user_cmd_t* cmd)
 }
 
 //works pgood
-
 void movement::ej(user_cmd_t* cmd) {
 	auto local = sdk::local_player;
 	auto controller = sdk::local_controller;
@@ -316,7 +316,7 @@ void movement::ej(user_cmd_t* cmd) {
 	const movetype_t move_type = local->move_type();
 
 	if (move_type == movetype_ladder || move_type == movetype_noclip || move_type == movetype_observer) return;
-	if (velocity2d < 5.0f) return;
+	if (velocity2d < 15.0f) return;
 
 	bool prev_grounded = local->flags() & fl_onground;
 	bool will_fall = false;
@@ -334,7 +334,9 @@ void movement::ej(user_cmd_t* cmd) {
 	cmd->sync_buttons();
 }
 
+// todo recode!
 void movement::ladder_ej(user_cmd_t* cmd) {
+	/*
 	static player_t* last_player = nullptr;
 	static int saved_tick = -1;
 	auto local = sdk::local_player;
@@ -369,6 +371,7 @@ void movement::ladder_ej(user_cmd_t* cmd) {
 	cmd->buttons2 |= changed;
 	cmd->buttons3 &= ~(k_movement_buttons | (leaving ? in_jump : in_duck));
 	cmd->sync_buttons();
+	*/
 }
 // TODO: add lock + predict
 void movement::ladder_bug(user_cmd_t* cmd) {
@@ -390,6 +393,16 @@ void movement::ladder_bug(user_cmd_t* cmd) {
 		notified = false;
 		return;
 	}
+
+	
+		const bool simulated = prediction::simulate_ticks_until(cmd, config::context.ladderbug_ticks, [&](std::size_t) {
+		const bool grounded = local->flags() & fl_onground;
+		will_fall = !grounded;
+		if (cmd->actual_move_type == move_type_ladder) {
+				
+		}
+		return will_fall;
+	});
 	auto base = cmd->get_base();
 	if (!base) return;
 	
@@ -403,6 +416,7 @@ void movement::ladder_bug(user_cmd_t* cmd) {
 	cmd->buttons2 = (cmd->buttons2 & ~in_jump) | ((previous_buttons ^ cmd->buttons) & in_jump);
 	cmd->buttons3 &= ~in_jump;
 	cmd->sync_buttons();
+	
 	if (!notified)
 	{
 		notified = true;
@@ -416,7 +430,10 @@ void movement::long_jump(user_cmd_t* cmd) {
 	auto base = cmd->get_base();
 
 };
-void movement::mini_jump(user_cmd_t* cmd) {};
+void movement::mini_jump(user_cmd_t* cmd) {
+	auto local = sdk::local_player;
+	auto base = cmd->get_base();
+};
 
 struct edgebug_data_t
 {
@@ -455,6 +472,8 @@ struct edgebug_result_t
     std::size_t contact_tick = 0;
     std::vector<vec3_t> path;
 };
+
+// detect bad, should be recoded as a predict 
 static auto detect_eb = [](user_cmd_t* cmd, const std::function<void(bool)>& prepare_simulation) -> edgebug_result_t {
     edgebug_result_t result{};
     auto local = sdk::local_player;
@@ -488,7 +507,8 @@ static auto detect_eb = [](user_cmd_t* cmd, const std::function<void(bool)>& pre
 			}, nullptr, [&](std::size_t) { 
 				prepare_simulation(ducking);
 			});
-			if (!simulated || !found) continue; 
+		
+		if (!simulated || !found) continue; 
 
         result.found = true;
         result.ducking = ducking;
@@ -520,24 +540,23 @@ void movement::edge_bug(user_cmd_t* cmd) {
 		base->mousedy = 0;
 
 		auto services = local->movement_services();
-		const std::uint64_t previous = services ? services->button_down_mask_prev() : cmd->buttons; // Берём прошлую маску кнопок; без services используем текущую как fallback.
+		const std::uint64_t previous = services ? services->button_down_mask_prev() : cmd->buttons;
 		const std::uint64_t mask = in_duck | k_movement_buttons;
 		cmd->buttons &= ~k_movement_buttons;
 		cmd->buttons &= ~in_duck;
-		if (ducking) cmd->buttons |= in_duck; // В duck-варианте включаем приседание; в stand оставляем выключенным.
-		cmd->buttons2 = (cmd->buttons2 & ~mask) | ((previous ^ cmd->buttons) & mask); // Обновляем changed-маску только для кнопок, которыми управляет EB.
-		cmd->buttons3 &= ~mask; // Удаляем scroll-события управляемых кнопок.
-		cmd->sync_buttons(); // Синхронизируем три маски кнопок с protobuf команды.
+		if (ducking) cmd->buttons |= in_duck;
+		cmd->buttons2 = (cmd->buttons2 & ~mask) | ((previous ^ cmd->buttons) & mask);
+		cmd->buttons3 &= ~mask;
+		cmd->sync_buttons();
 
 		for (int i = 0; i < cmd->subtick_count(); i++) {
 			auto step = cmd->get_subtick(i);
 			if (!step) continue;
-			if (step->has_bits & 0x8u) step->set_analog_forward_delta(0.f); // Убираем уже заданное изменение forwardmove внутри тика.
-			if (step->has_bits & 0x10u) step->set_analog_left_delta(0.f); // Убираем уже заданное изменение sidemove внутри тика.
-			if (step->has_bits & 0x20u) step->set_pitch_delta(0.f); // Обнуляем существующую сабтиковую поправку pitch.
-			if (step->has_bits & 0x40u) step->set_yaw_delta(0.f); // Обнуляем существующую сабтиковую поправку yaw.
-			if ((step->has_bits & 0x1u) && (step->button & mask)) // Меняем pressed только у событий управляемых кнопок.
-			step->set_pressed(ducking && (step->button & in_duck)); // Оставляем нажатым только duck в duck-варианте; остальные события отпускаем.
+			if (step->has_bits & 0x8u) step->set_analog_forward_delta(0.f);
+			if (step->has_bits & 0x10u) step->set_analog_left_delta(0.f);
+			if (step->has_bits & 0x20u) step->set_pitch_delta(0.f);
+			if (step->has_bits & 0x40u) step->set_yaw_delta(0.f);
+			if ((step->has_bits & 0x1u) && (step->button & mask)) step->set_pressed(ducking && (step->button & in_duck));
 		}
 	};
 
@@ -554,11 +573,11 @@ void movement::edge_bug(user_cmd_t* cmd) {
 
 
 	const float actual_z = std::floor(local->velocity().z);
-	if (actual_z != -7.f && actual_z != -6.f) edgebug_data.contact_notified = false;
+	if (actual_z != -7.f) edgebug_data.contact_notified = false;
 	if (edgebug_data.edgebugging) {
 		const float z = std::floor(local->velocity().z);
-		const bool caught = z == -7.f || z == -6.f;
-		if (caught) {
+		const bool caught = z == -7.f;
+			if (caught) {
 			if (!edgebug_data.contact_notified) {
 				edgebug_data.contact_notified = true;
 				utilities::chat_print("edgebugged");
@@ -573,14 +592,15 @@ void movement::edge_bug(user_cmd_t* cmd) {
 		{
 			edgebug_data.edgebugging = false;
 			edgebug_data.target_tick = 0;
-			edgebug_data.edgebugged = std::floor(local->velocity().z) == -7.f || std::floor(local->velocity().z) == -6.f;
+			edgebug_data.edgebugged = std::floor(local->velocity().z) == -7.f;
 			return;
 		} 
 			if (!caught) {
 			if (config::context.eb_lock) {
 				apply_input(edgebug_data.ducking);
 			}
-			edgebug_visual.path_until = std::chrono::steady_clock::now() + std::chrono::seconds(1); // Продлеваем визуализацию активного lock.
+				
+			edgebug_visual.path_until = std::chrono::steady_clock::now() + std::chrono::seconds(1);
 			return;
 		}
 	}
@@ -603,9 +623,7 @@ void movement::edge_bug(user_cmd_t* cmd) {
     edgebug_visual.path = std::move(result.path);
     edgebug_visual.path_until = std::chrono::steady_clock::now() + std::chrono::seconds(1);
     if (!edgebug_visual.path.empty()) edgebug_visual.position = edgebug_visual.path.back();
-    if (config::context.eb_lock) {
-		apply_input(result.ducking);
-	}
+    if (config::context.eb_lock) apply_input(result.ducking);
 }
 
 //delu pasted
