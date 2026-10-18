@@ -257,7 +257,6 @@ bool __fastcall hooks::create_move::hook(void* a1, std::uint32_t a2, std::uint8_
 	sdk::update_local_controller();
 	sdk::update_local_player();
 
-
 	if (sdk::local_controller)
 	{
 		if (!interfaces::engine || !interfaces::engine->is_in_game())
@@ -441,13 +440,6 @@ void __fastcall hooks::override_view::hook(void* client_mode, c_view_setup* view
 
 std::int64_t __fastcall hooks::generate_primitives::hook(std::uintptr_t thisptr, std::uintptr_t scene_object, std::uintptr_t scene_view, std::uintptr_t primitive_buffer)
 {
-	static bool logged = false;
-	if (!logged)
-	{
-		logged = true;
-	//	console::log("[?] chams: generate primitives reached\n");
-	}
-
 	std::int64_t result = 0;
 
 	if (thisptr && scene_object && primitive_buffer)
@@ -472,20 +464,10 @@ std::int64_t __fastcall hooks::generate_primitives::hook(std::uintptr_t thisptr,
 
 			return result;
 		}
-
-
 	}
-
 	return generate_primitives_original(thisptr, scene_object, scene_view, primitive_buffer);
 }
-void* __fastcall hooks::draw_glow::hook(void* glow_property)
-{
-	static bool logged = false;
-	if (!logged)
-	{
-		logged = true;
-		console::log("[?] glow: draw glow reached\n");
-	}
+void* __fastcall hooks::draw_glow::hook(void* glow_property) {
 	return draw_glow_original(glow_property);
 }
 
@@ -502,6 +484,7 @@ void* __fastcall hooks::relative_mouse::hook(i_input_system* input, bool enabled
 
 void __fastcall hooks::viewmodel_offsets::hook(void* viewmodel, float* offsets, float* fov)
 {
+	//working pgood :D
 	viewmodel_offsets_original(viewmodel, offsets, fov);
 
 	if (!config::context.viewmodel) return;
@@ -514,13 +497,10 @@ void __fastcall hooks::viewmodel_offsets::hook(void* viewmodel, float* offsets, 
 		offsets[2] = config::context.viewmodel_z;
 	}
 
-	if (fov)
-	{
-		*fov = config::context.viewmodel_fov;
-	}
+	if (fov) *fov = config::context.viewmodel_fov;
 }
 
-
+// i love you xey! big thanks (also ai ported cuz why not:D)
 namespace {
 	constexpr std::size_t skybox_patch_size = 10;
 
