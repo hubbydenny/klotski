@@ -394,12 +394,38 @@ void movement::ladder_bug(user_cmd_t* cmd) {
 		return;
 	}
 
+	auto lock = [&](bool locked) { 
+		
+		cmd->set_move(0.f, 0.f);
+		base->has_bits |= cbase_user_cmd_pb_t::has_mousedx | cbase_user_cmd_pb_t::has_mousedy;
+		base->mousedx = 0;
+		base->mousedy = 0;
+
+		auto services = local->movement_services();
+		const std::uint64_t previous = services ? services->button_down_mask_prev() : cmd->buttons;
+		cmd->buttons &= ~k_movement_buttons;
+		cmd->buttons2 = (cmd->buttons2 & ~mask) | ((previous ^ cmd->buttons) & mask);
+		cmd->buttons3 &= ~mask;
+		cmd->sync_buttons();
+
+		for (int i = 0; i < cmd->subtick_count(); i++) {
+			auto step = cmd->get_subtick(i);
+			if (!step) continue;
+			if (step->has_bits & 0x8u) step->set_analog_forward_delta(0.f);
+			if (step->has_bits & 0x10u) step->set_analog_left_delta(0.f);
+			if (step->has_bits & 0x20u) step->set_pitch_delta(0.f);
+			if (step->has_bits & 0x40u) step->set_yaw_delta(0.f);
+			if (step->has_bits & 0x1u);
+			locked = true;
+		}
+	};
 	
 		const bool simulated = prediction::simulate_ticks_until(cmd, config::context.ladderbug_ticks, [&](std::size_t) {
 		const bool grounded = local->flags() & fl_onground;
 		will_fall = !grounded;
-		if (cmd->actual_move_type == move_type_ladder) {
-				
+		if (cmd->actual_move_type == move_type_ladder && will_fall) {
+			// should add trace left or right ladder and make proper side_move
+				lock(locked);
 		}
 		return will_fall;
 	});
