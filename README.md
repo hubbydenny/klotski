@@ -1,2 +1,4 @@
-# Klotski
-why i can't commit last 4 commits ☠️
+# klotski
+im holy idiot fix ma shi based on sum base on github 3yo old 
+ggfuckingez
+only for eduCUMcion
