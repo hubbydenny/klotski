@@ -87,6 +87,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD call_reason, void* reserved)
 			break;
 
 		case DLL_THREAD_DETACH:
+			console::log("Detaching");
 			break;
 
 		case DLL_PROCESS_DETACH:

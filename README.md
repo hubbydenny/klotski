@@ -1,4 +1,2 @@
-# klotski
-im holy idiot fix ma shi based on sum base on github 3yo old 
-ggfuckingez
-only for eduCUMcion
+# klotski caes2
+/* ~~~  Meow! latest 4-5 commits was in browser because i'm not at home :3 so i will fix tomorrow, meow :3 ~~~*\
